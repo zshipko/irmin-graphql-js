@@ -57,10 +57,175 @@ function makeKey(k) {
     return new Key(k);
 }
 
+class BranchRef {
+    constructor(client, name){
+        this.client = client;
+        this.name = name;
+    }
+
+    // Execute a query, with the given variables and operation name
+    execute({body, variables={}, operation=null}){
+        variables["branch"] = this.name;
+        return this.client.execute({body, variables, operation})
+    }
+
+  // Get a value from Irmin
+    get(key){
+        key = makeKey(key);
+        return new Promise ((resolve, reject) => {
+            this.execute({
+                body: query.get,
+                variables: {
+                    key: key.string(),
+                },
+            }).then((x) => {
+                resolve(x.branch.get)
+            }, reject);
+        })
+    }
+
+    // Store a value in Irmin
+    set(key, value){
+        key = makeKey(key);
+        return new Promise ((resolve, reject) => {
+            this.execute({
+                body: query.set,
+                variables: {
+                    key: key.string(),
+                    value: value,
+                }
+            }).then((x) => {
+                resolve(x.set)
+            }, reject);
+        })
+    }
+
+    // Remove a value
+    remove(key){
+        key = makeKey(key);
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.remove,
+                variables: {
+                    key: key.string(),
+                }
+            }).then((x) => {
+                resolve(x.remove)
+            }, reject);
+        })
+    }
+
+    // Merge branches
+    merge(from){
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.merge,
+                variables: {
+                    from: from,
+                }
+            }).then((x) => {
+                resolve(x.merge)
+            }, reject);
+        })
+    }
+
+    // Push to a remote repository
+    push(remote){
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.push,
+                variables: {
+                    remote: remote,
+                }
+            }).then((x) => {
+                resolve(x.push)
+            }, reject);
+        })
+    }
+
+    // Pull from a remote repository
+    pull(remote){
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.pull,
+                variables: {
+                    remote: remote,
+                }
+            }).then((x) => {
+                resolve(x.pull)
+            }, reject)
+        })
+    }
+
+    // Restore Irmin to a previous state
+    revert(commit){
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.revert,
+                variables: {
+                    commit: commit,
+                }
+            }).then((x) => {
+                resolve(x.revert.hash === commit)
+            }, reject)
+        })
+    }
+
+    // Clone from a remote repository
+    clone(remote){
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.clone,
+                variables: {
+                    remote: remote,
+                    branch: branch,
+                }
+            }).then((x) => {
+                resolve(x.clone)
+            }, reject)
+        })
+    }
+
+    // Returns information about the selected branch
+    info(){
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.branch,
+            }).then((x) => {
+                resolve(x.branch)
+            }, reject)
+        });
+    }
+
+    list(key){
+        key = makeKey(key);
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.list,
+                variables: {
+                    key: key.string(),
+                }
+            }).then((x) => {
+                resolve(x.branch.head.node.get.tree)
+            }, reject)
+        })
+    }
+
+
+}
+
 // `Irmin` is the main client implementation
 class Irmin {
     constructor(url){
         this.url = url;
+    }
+
+    branch(name) {
+        return new BranchRef(this, name)
+    }
+
+    master() {
+        return new BranchRef(this, "master")
     }
 
     // Execute a query, with the given variables and operation name
@@ -83,171 +248,6 @@ class Irmin {
             }, reject);
         });
     }
-
-    // Get a value from Irmin
-    get(key, branch="master"){
-        key = makeKey(key);
-        return new Promise ((resolve, reject) => {
-            this.execute({
-                body: query.get,
-                variables: {
-                    key: key.string(),
-                    branch: branch,
-                },
-            }).then((x) => {
-                resolve(x.branch.get)
-            }, reject);
-        })
-    }
-
-    // Store a value in Irmin
-    set(key, value, branch=null){
-        key = makeKey(key);
-        return new Promise ((resolve, reject) => {
-            this.execute({
-                body: query.set,
-                variables: {
-                    key: key.string(),
-                    value: value,
-                    branch: branch
-                }
-            }).then((x) => {
-                resolve(x.set)
-            }, reject);
-        })
-    }
-
-    // Remove a value
-    remove(key, branch=null){
-        key = makeKey(key);
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.remove,
-                variables: {
-                    key: key.string(),
-                    branch: branch,
-                }
-            }).then((x) => {
-                resolve(x.remove)
-            }, reject);
-        })
-    }
-
-    // Merge branches
-    merge(into, from){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.merge,
-                variables: {
-                    into: into,
-                    from: from,
-                }
-            }).then((x) => {
-                resolve(x.merge)
-            }, reject);
-        })
-    }
-
-    // Push to a remote repository
-    push(remote, branch=null){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.push,
-                variables: {
-                    remote: remote,
-                    branch: branch,
-                }
-            }).then((x) => {
-                resolve(x.push)
-            }, reject);
-        })
-    }
-
-    // Pull from a remote repository
-    pull(remote, branch=null){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.pull,
-                variables: {
-                    remote: remote,
-                    branch: branch,
-                }
-            }).then((x) => {
-                resolve(x.pull)
-            }, reject)
-        })
-    }
-
-    // Restore Irmin to a previous state
-    revert(commit, branch=null){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.revert,
-                variables: {
-                    commit: commit,
-                    branch: branch,
-                }
-            }).then((x) => {
-                resolve(x.revert.hash === commit)
-            }, reject)
-        })
-    }
-
-    // Clone from a remote repository
-    clone(remote, branch=null){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.clone,
-                variables: {
-                    remote: remote,
-                    branch: branch,
-                }
-            }).then((x) => {
-                resolve(x.clone)
-            }, reject)
-        })
-    }
-
-    // Returns information about the master branch
-    master(){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.master
-            }).then((x) => {
-                resolve(x.master)
-            }, reject)
-        });
-    }
-
-    // Returns information about any branch
-    branch(name){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.branch,
-                variables: {
-                    branch: name
-                }
-            }).then((x) => {
-                resolve(x.branch)
-            }, reject)
-        });
-    }
-
-    list(key, branch="master"){
-        key = makeKey(key);
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.list,
-                variables: {
-                    key: key.string(),
-                    branch: branch,
-                }
-            }).then((x) => {
-                resolve(x.branch.head.node.get.tree)
-            }, reject)
-        })
-    }
-
 }
 
 query = {
@@ -282,8 +282,8 @@ mutation Remove($branch: String, $key: String!) {
 
 merge:
 `
-mutation Merge($into: String, $from: String!) {
-    merge(into: $into, from: $from, info: null) {
+mutation Merge($branch: String, $from: String!) {
+    merge(into: $branch, from: $from, info: null) {
         hash
     }
 }
