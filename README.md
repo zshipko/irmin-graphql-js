@@ -13,7 +13,7 @@ var ir = new Irmin("https://127.0.0.1:8080/graphql");
 Setting a value:
 
 ```javascript
-ir.set("a/b/c", "123").then((commit_hash) => {
+ir.master().set("a/b/c", "123").then((commit_hash) => {
     console.log(commit_hash);
 });
 ```
@@ -21,7 +21,7 @@ ir.set("a/b/c", "123").then((commit_hash) => {
 Getting a value:
 
 ```javascript
-ir.get("a/b/c").then((value) => {
+ir.master().get("a/b/c").then((value) => {
     console.log(value);
 });
 ```
