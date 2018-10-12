@@ -209,7 +209,7 @@ class BranchRef {
                 let a = x.branch.head.node.get.tree;
                 let b = {};
                 for (var i = 0; i < a.length; i++){
-                    b[a[i].key] = a[i].value;
+                    b[makeKey(a[i].key).string()] = a[i].value;
                 }
                 resolve(b)
             }, reject)
