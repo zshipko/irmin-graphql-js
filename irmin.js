@@ -283,7 +283,7 @@ mutation Remove($branch: String, $key: String!) {
 merge:
 `
 mutation Merge($branch: String, $from: String!) {
-    merge(into: $branch, from: $from, info: null) {
+    merge(branch: $branch, from: $from, info: null) {
         hash
     }
 }
