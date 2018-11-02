@@ -25,3 +25,7 @@ ir.master().get("a/b/c").then((value) => {
     console.log(value);
 });
 ```
+
+## Examples
+
+There are some examples using NodeJS in the `examples/` directory, they require the `node-fetch` package to be installed via npm.

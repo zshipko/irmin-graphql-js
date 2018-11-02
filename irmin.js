@@ -69,7 +69,7 @@ class BranchRef {
         return this.client.execute({body, variables, operation})
     }
 
-  // Get a value from Irmin
+    // Get a value from Irmin
     get(key){
         key = makeKey(key);
         return new Promise ((resolve, reject) => {
@@ -388,3 +388,5 @@ query List($branch: String!, $key: String!) {
 
 };
 
+exports.Irmin = Irmin;
+exports.Key = Key;
