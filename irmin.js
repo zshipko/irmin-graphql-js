@@ -388,5 +388,7 @@ query List($branch: String!, $key: String!) {
 
 };
 
-exports.Irmin = Irmin;
-exports.Key = Key;
+if (typeof exports != "undefined") {
+    exports.Irmin = Irmin;
+    exports.Key = Key;
+}
