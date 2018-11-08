@@ -84,8 +84,23 @@ class BranchRef {
         })
     }
 
+    // Get a value with metadata from Irmin
+    getAll(key){
+        key = makeKey(key);
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.getAll,
+                variables: {
+                    key: key.string()
+                },
+            }).then((x) => {
+                resolve(x.branch.get_all)
+            })
+        })
+    }
+
     // Store a value in Irmin
-    set(key, value){
+    set(key, value, info=null){
         key = makeKey(key);
         return new Promise ((resolve, reject) => {
             this.execute({
@@ -93,6 +108,7 @@ class BranchRef {
                 variables: {
                     key: key.string(),
                     value: value,
+                    info: info,
                 }
             }).then((x) => {
                 resolve(x.set)
@@ -100,14 +116,33 @@ class BranchRef {
         })
     }
 
+    // Store a value in Irmin with provided metadata
+    setAll(key, value, metadata, info=null){
+        key = makeKey(key);
+        return new Promise ((resolve, reject) => {
+            this.execute({
+                body: query.setAll,
+                variables: {
+                    key: key.string(),
+                    value: value,
+                    metadata: metadata,
+                    info: info,
+                }
+            }).then((x) => {
+                resolve(x.set_all)
+            }, reject);
+        })
+    }
+
     // Remove a value
-    remove(key){
+    remove(key, info=null){
         key = makeKey(key);
         return new Promise((resolve, reject) => {
             this.execute({
                 body: query.remove,
                 variables: {
                     key: key.string(),
+                    info: info,
                 }
             }).then((x) => {
                 resolve(x.remove)
@@ -116,12 +151,13 @@ class BranchRef {
     }
 
     // Merge branches
-    merge(from){
+    merge(from, info=null){
         return new Promise((resolve, reject) => {
             this.execute({
                 body: query.merge,
                 variables: {
                     from: from,
+                    info: info,
                 }
             }).then((x) => {
                 resolve(x.merge)
@@ -144,12 +180,13 @@ class BranchRef {
     }
 
     // Pull from a remote repository
-    pull(remote){
+    pull(remote, info=null){
         return new Promise((resolve, reject) => {
             this.execute({
                 body: query.pull,
                 variables: {
                     remote: remote,
+                    info: info,
                 }
             }).then((x) => {
                 resolve(x.pull)
@@ -277,10 +314,31 @@ query Get($branch: String!, $key: String!) {
 }
 `,
 
+getAll:
+`
+query GetAll($branch: String!, $key: String!) {
+    branch(name: $branch) {
+        get_all(key: $key) {
+            value
+            metadata
+        }
+    }
+}
+`,
+
 set:
 `
-mutation Set($branch: String, $key: String!, $value: String!) {
-    set(branch: $branch, key: $key, value: $value, info: null) {
+mutation Set($branch: String, $key: String!, $value: String!, $info: InfoInput) {
+    set(branch: $branch, key: $key, value: $value, info: $info) {
+        hash
+    }
+}
+`,
+
+setAll:
+`
+mutation SetAll($branch: String, $key: String!, $value: String!, $metadata: String, $info: InfoInput) {
+    set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {
         hash
     }
 }
@@ -288,8 +346,8 @@ mutation Set($branch: String, $key: String!, $value: String!) {
 
 remove:
 `
-mutation Remove($branch: String, $key: String!) {
-    remove(branch: $branch, key: $key, info: null) {
+mutation Remove($branch: String, $key: String!, $info: InfoInput) {
+    remove(branch: $branch, key: $key, info: $info) {
         hash
     }
 }
@@ -297,8 +355,8 @@ mutation Remove($branch: String, $key: String!) {
 
 merge:
 `
-mutation Merge($branch: String, $from: String!) {
-    merge(branch: $branch, from: $from, info: null) {
+mutation Merge($branch: String, $from: String!, $info: InfoInput) {
+    merge(branch: $branch, from: $from, info: $info) {
         hash
     }
 }
@@ -313,8 +371,8 @@ mutation Push($branch: String, $remote: String!) {
 
 pull:
 `
-mutation Pull($branch: String, $remote: String!) {
-    pull(branch: $branch, remote: $remote, info: null) {
+mutation Pull($branch: String, $remote: String!, $info: InfoInput) {
+    pull(branch: $branch, remote: $remote, info: $info) {
         hash
     }
 }
