@@ -233,6 +233,16 @@ class Irmin {
         return new BranchRef(this, "master")
     }
 
+    branches() {
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.branches,
+            }).then((res) => {
+                resolve(res.branches);
+            }, reject);
+        });
+    }
+
     // Execute a query, with the given variables and operation name
     execute({body, variables={}, operation=null}){
         let q = {
@@ -386,6 +396,12 @@ query List($branch: String!, $key: String!) {
 }
 `,
 
+branches:
+`
+query {
+    branches
+}
+`
 };
 
 if (typeof exports != "undefined") {
