@@ -26,6 +26,33 @@ ir.master().get("a/b/c").then((value) => {
 });
 ```
 
+## Writing custom queries
+
+When using `irmin.js` it is also very easy to execute custom queries:
+
+```javascript
+let body = `
+    query GetExample($key: String!) {
+        master {
+            get(key: $key)
+        }
+    }
+`;
+
+let data = {
+    body: body,
+    vars: {
+        key: "a/b/c"
+    }
+};
+
+ir.execute(data).then((res) => {
+    console.log(res.master.get);
+});
+```
+
+In the example above, `body` is a string containing the actual query, `data` is an object with `body`, `vars` and `operation` fields. The `vars` and `operation` fields may be left undefined if not in use.
+
 ## Examples
 
 There are some examples using NodeJS in the `examples/` directory, they require the `node-fetch` package to be installed via npm.
