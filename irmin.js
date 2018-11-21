@@ -43,7 +43,7 @@ class Key {
         if (this.path && this.path.length > 0){
             return this.path.join('/');
         } else {
-            return null;
+            return "/";
         }
     }
 }
@@ -99,6 +99,26 @@ class BranchRef {
         })
     }
 
+    getTree(key){
+        key = makeKey(key);
+        return new Promise((resolve, reject) => {
+            this.execute({
+                body: query.getTree,
+                variables: {
+                    key: key.string()
+                },
+            }).then((x) => {
+                let tree = x.branch.get_tree;
+                var obj = {};
+                for(var i = 0; i < tree.length; i++){
+                    var item = tree[i];
+                    obj[makeKey(item.key).string()] = {metadata: item.metadata, value: item.value};
+                }
+                resolve(obj);
+            })
+        })
+    }
+
     // Store a value in Irmin
     set(key, value, info=null){
         key = makeKey(key);
@@ -126,6 +146,28 @@ class BranchRef {
                     key: key.string(),
                     value: value,
                     metadata: metadata,
+                    info: info,
+                }
+            }).then((x) => {
+                resolve(x.set_all)
+            }, reject);
+        })
+    }
+
+    setTree(key, tree, info=null){
+        key = makeKey(key);
+        return new Promise ((resolve, reject) => {
+            var treeArray = [];
+
+            for (var k in tree) {
+                treeArray.push({key: k, value: tree[k].value, metadata: tree[k].metadata})
+            }
+
+            this.execute({
+                body: query.setTree,
+                variables: {
+                    key: key.string(),
+                    tree: treeArray,
                     info: info,
                 }
             }).then((x) => {
@@ -326,6 +368,19 @@ query GetAll($branch: String!, $key: String!) {
 }
 `,
 
+getTree:
+`
+query GetTree($branch: String!, $key: String!) {
+    branch(name: $branch) {
+        get_tree(key: $key) {
+            key
+            value
+            metadata
+        }
+    }
+}
+`,
+
 set:
 `
 mutation Set($branch: String, $key: String!, $value: String!, $info: InfoInput) {
@@ -339,6 +394,15 @@ setAll:
 `
 mutation SetAll($branch: String, $key: String!, $value: String!, $metadata: String, $info: InfoInput) {
     set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {
+        hash
+    }
+}
+`,
+
+setTree:
+`
+mutation SetTree($branch: String, $key: String!, $tree: [TreeInput!]!, $info: InfoInput) {
+    set_tree(branch: $branch, key: $key, tree: $tree, info: $info) {
         hash
     }
 }
