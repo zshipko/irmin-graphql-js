@@ -57,6 +57,40 @@ function makeKey(k) {
     return new Key(k);
 }
 
+function makeTreeArray(tree, array, key){
+    var treeArray = array || [];
+  	key = key || [];
+
+    for (var k in tree) {
+        key.push(k);
+        if (typeof tree[k].value === 'undefined') {
+            makeTreeArray(tree[k], treeArray, key);
+        } else {
+            treeArray.push({key: makeKey(key).string(), value: tree[k].value, metadata: tree[k].metadata});
+        }
+        key.pop();
+    }
+
+    return treeArray;
+}
+
+function makeTree(arr) {
+    var tree = {};
+    for (var i = 0; i < arr.length; i++) {
+        var key = makeKey(arr[i].key);
+        var obj = tree;
+        for(var j = 0; j < key.path.length; j++){
+            if (j == key.path.length - 1) {
+                obj[key.path[j]] = {value: arr[i].value, metadata: arr[i].metadata};
+            } else {
+                obj[key.path[j]] = obj[key.path[j]] || {};
+                obj = obj[key.path[j]];
+            }
+        }
+    }
+    return tree;
+}
+
 class BranchRef {
     constructor(client, name){
         this.client = client;
@@ -108,13 +142,8 @@ class BranchRef {
                     key: key.string()
                 },
             }).then((x) => {
-                let tree = x.branch.get_tree;
-                var obj = {};
-                for(var i = 0; i < tree.length; i++){
-                    var item = tree[i];
-                    obj[makeKey(item.key).string()] = {metadata: item.metadata, value: item.value};
-                }
-                resolve(obj);
+                let tree = makeTree(x.branch.get_tree);
+                resolve(tree);
             })
         })
     }
@@ -154,15 +183,27 @@ class BranchRef {
         })
     }
 
+    updateTree(key, tree, info=null){
+        key = makeKey(key);
+        let treeArray = makeTreeArray(tree);
+        return new Promise ((resolve, reject) => {
+            this.execute({
+                body: query.updateTree,
+                variables: {
+                    key: key.string(),
+                    tree: treeArray,
+                    info: info,
+                }
+            }).then((x) => {
+                resolve(x.set_all)
+            }, reject);
+        })
+    }
+
     setTree(key, tree, info=null){
         key = makeKey(key);
+        let treeArray = makeTreeArray(tree);
         return new Promise ((resolve, reject) => {
-            var treeArray = [];
-
-            for (var k in tree) {
-                treeArray.push({key: k, value: tree[k].value, metadata: tree[k].metadata})
-            }
-
             this.execute({
                 body: query.setTree,
                 variables: {
@@ -334,9 +375,14 @@ class Irmin {
             return request(this.url, q).then((response) => {
                 response.text().then((x) => {
                     try {
-                        resolve(JSON.parse(x).data)
+                        let j = JSON.parse(x);
+                        if (j["errors"]) {
+                            reject(j);
+                            return;
+                        }
+                        resolve(j.data)
                     } catch (err) {
-                        reject(x)
+                        reject({"errors": [err]})
                     }
                 });
             }, reject);
@@ -394,6 +440,15 @@ setAll:
 `
 mutation SetAll($branch: String, $key: String!, $value: String!, $metadata: String, $info: InfoInput) {
     set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {
+        hash
+    }
+}
+`,
+
+updateTree:
+`
+mutation SetTree($branch: String, $key: String!, $tree: [TreeInput!]!, $info: InfoInput) {
+    update_tree(branch: $branch, key: $key, tree: $tree, info: $info) {
         hash
     }
 }

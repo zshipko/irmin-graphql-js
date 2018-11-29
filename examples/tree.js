@@ -12,5 +12,6 @@ let tree = {
 master.setTree(null, tree).then((_) => {
     master.getTree(null).then((res) => {
         console.log(res);
+        console.log(res.a.b.c);
     });
 });
