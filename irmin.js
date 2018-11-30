@@ -235,9 +235,7 @@ class BranchRef {
 
     // Returns information about the selected branch
     info(){
-        return this._query("info", {
-            body: query.branch_info,
-        }, res => {
+        return this._query("branch_info", {}, res => {
             return res.branch;
         });
     }
