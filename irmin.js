@@ -15,15 +15,24 @@ function request(url, body){
 // The `query` object contains all of the pre-defined queries
 var query;
 
+function trimChar(string, charToRemove) {
+    while(string.charAt(0)==charToRemove) {
+        string = string.substring(1);
+    }
+
+    while(string.charAt(string.length-1)==charToRemove) {
+        string = string.substring(0,string.length-1);
+    }
+
+    return string;
+}
+
 // Used to store keys as an array of strings, this is meant to mirror
 // the way keys are represented in Irmin
 class Key {
     constructor(k) {
         if (typeof k === 'string'){
-            if (k[0] == '/'){
-                k = k.slice(1);
-            }
-
+            k = trimChar(k, '/');
             if (k == ''){
                 this.path = [];
                 return;
@@ -32,6 +41,12 @@ class Key {
             this.path = k.split('/');
         } else {
             this.path = k
+        }
+
+        for (var i = 0; i < this.path.length; i++){
+            if (this.path[i] === ''){
+                this.path.splice(i, i+1);
+            }
         }
     }
 
