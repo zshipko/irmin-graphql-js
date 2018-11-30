@@ -104,7 +104,7 @@ class BranchRef {
         key = makeKey(key);
         return new Promise((resolve, reject) => {
             this.execute({
-                body: query.getAll,
+                body: query.get_all,
                 variables: {
                     key: key.string()
                 },
@@ -118,7 +118,7 @@ class BranchRef {
         key = makeKey(key);
         return new Promise((resolve, reject) => {
             this.execute({
-                body: query.getTree,
+                body: query.get_tree,
                 variables: {
                     key: key.string()
                 },
@@ -156,7 +156,7 @@ class BranchRef {
         key = makeKey(key);
         return new Promise ((resolve, reject) => {
             this.execute({
-                body: query.setAll,
+                body: query.set_all,
                 variables: {
                     key: key.string(),
                     value: value,
@@ -179,7 +179,7 @@ class BranchRef {
             }
 
             this.execute({
-                body: query.setTree,
+                body: query.set_tree,
                 variables: {
                     key: key.string(),
                     tree: treeArray,
@@ -284,7 +284,7 @@ class BranchRef {
     info(){
         return new Promise((resolve, reject) => {
             this.execute({
-                body: query.branch,
+                body: query.branch_info,
             }).then((x) => {
                 resolve(x.branch)
             }, reject)
@@ -358,189 +358,30 @@ class Irmin {
     }
 }
 
-query = {
-get:
-`
-query Get($branch: String!, $key: String!) {
-    branch(name: $branch) {
-        get(key: $key) {
-            value
-        }
-    }
-}
-`,
-
-getAll:
-`
-query GetAll($branch: String!, $key: String!) {
-    branch(name: $branch) {
-        get_all(key: $key) {
-            value
-            metadata
-        }
-    }
-}
-`,
-
-getTree:
-`
-query GetTree($branch: String!, $key: String!) {
-    branch(name: $branch) {
-        get_tree(key: $key) {
-            key
-            value
-            metadata
-        }
-    }
-}
-`,
-
-set:
-`
-mutation Set($branch: String, $key: String!, $value: String!, $info: InfoInput) {
-    set(branch: $branch, key: $key, value: $value, info: $info) {
-        hash
-    }
-}
-`,
-
-setAll:
-`
-mutation SetAll($branch: String, $key: String!, $value: String!, $metadata: String, $info: InfoInput) {
-    set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {
-        hash
-    }
-}
-`,
-
-setTree:
-`
-mutation SetTree($branch: String, $key: String!, $tree: [TreeInput!]!, $info: InfoInput) {
-    set_tree(branch: $branch, key: $key, tree: $tree, info: $info) {
-        hash
-    }
-}
-`,
-
-remove:
-`
-mutation Remove($branch: String, $key: String!, $info: InfoInput) {
-    remove(branch: $branch, key: $key, info: $info) {
-        hash
-    }
-}
-`,
-
-merge:
-`
-mutation Merge($branch: String, $from: String!, $info: InfoInput) {
-    merge(branch: $branch, from: $from, info: $info) {
-        hash
-    }
-}
-`,
-
-push:
-`
-mutation Push($branch: String, $remote: String!) {
-    push(branch: $branch, remote: $remote)
-}
-`,
-
-pull:
-`
-mutation Pull($branch: String, $remote: String!, $info: InfoInput) {
-    pull(branch: $branch, remote: $remote, info: $info) {
-        hash
-    }
-}
-`,
-
-clone:
-`
-mutation Clone($branch: String, $remote: String!) {
-    clone(branch: $branch, remote: $remote) {
-        hash
-    }
-}
-`,
-
-revert:
-`
-mutation Revert($branch: String, $commit: String!) {
-    revert(branch: $branch, commit: $commit) {
-        hash
-    }
-}
-`,
-
-master:
-`
-query {
-    master {
-        name
-        head {
-            hash,
-            info {
-                message,
-                author,
-                date
-            }
-            parents {
-                hash
-            }
-        }
-    }
-}
-`,
-
-branch:
-`
-query GetBranch($branch: String!) {
-    branch(name: $branch) {
-        name,
-        head {
-            hash,
-            info {
-                message,
-                author,
-                date
-            }
-            parents {
-                hash
-            }
-        }
-    }
-}
-`,
-
-list:
-`
-query List($branch: String!, $key: String!) {
-    branch(name: $branch) {
-        head {
-            node {
-                get(key: $key) {
-                    tree {
-                        key,
-                        value
-                    }
-                }
-            }
-        }
-    }
-}
-`,
-
-branches:
-`
-query {
-    branches
-}
-`
-};
-
 if (typeof exports != "undefined") {
     exports.Irmin = Irmin;
     exports.Key = Key;
+}
+
+// queries
+
+query = {
+  "get": "\n  query Get($branch: BranchName!, $key: Key!) {\n    branch(name: $branch) {\n      get(key: $key)\n    }\n  }\n",
+  "get_tree": "\n  query GetTree($branch: BranchName!, $key: Key!) {\n    branch(name: $branch) {\n      get_tree(key: $key) {\n        key\n        value\n        metadata\n      }\n    }\n  }\n",
+  "set": "\n  mutation Set($branch: BranchName!, $key: Key!, $value: Value!, $info: InfoInput) {\n    set(branch: $branch, key: $key, value: $value, info: $info) {\n      hash\n    }\n  }\n",
+  "update_tree": "\n  mutation UpdateTree($branch: BranchName!, $key: Key!, $tree: [TreeItem!]!, $info: InfoInput) {\n    update_tree(branch: $branch, key: $key, tree: $tree, info: $info) {\n      hash\n    }\n  }\n",
+  "set_tree": "\n  mutation SetTree($branch: BranchName!, $key: Key!, $tree: [TreeItem!]! , $info: InfoInput) {\n    set_tree(branch: $branch, key: $key, tree: $tree, info: $info) {\n      hash\n    }\n  }\n",
+  "remove": "\n  mutation Remove($branch: BranchName!, $key: Key!, $info: InfoInput) {\n    remove(branch: $branch, key: $key, info: $info) {\n      hash\n    }\n  }\n",
+  "merge": "\n  mutation Merge($branch: BranchName, $from: BranchName!, $info: InfoInput) {\n      merge(branch: $branch, from: $from, info: $info) {\n          hash\n      }\n  }\n",
+  "push": "\n  mutation Push($branch: BranchName, $remote: Remote!) {\n    push(branch: $branch, remote: $remote)\n  }\n",
+  "pull": "\n  mutation Pull($branch: BranchName, $remote: Remote!, $info: InfoInput) {\n    pull(branch: $branch, remote: $remote, info: $info) {\n      hash\n    }\n  }\n",
+  "clone": "\n  mutation Clone($branch: BranchName, $remote: Remote!) {\n    clone(branch: $branch, remote: $remote) {\n      hash\n    }\n  }\n",
+  "revert": "\n  mutation Revert($branch: BranchName, $commit: CommitHash!) {\n    revert(branch: $branch, commit: $commit) {\n      hash\n    }\n  }\n",
+  "lca": "\n  query($branch: BranchName!, $hash: CommitHash!) {\n    branch(name: $branch) {\n      lca(commit: $hash) {\n        hash,\n        info {\n          message,\n          author,\n          date\n        }\n        parents {\n          hash\n        }\n      }\n    }\n  }\n",
+  "branch_info": "\n  query BranchInfo($branch: BranchName!) {\n      branch(name: $branch) {\n        name,\n        head {\n          hash,\n          info {\n            message,\n            author,\n            date\n          }\n          parents {\n            hash\n          }\n        }\n      }\n  }\n",
+  "commit_info": "\n  query CommitInfo($hash: CommitHash!) {\n    commit(hash: $hash) {\n      hash,\n      info {\n          message,\n          author,\n          date\n      }\n      parents {\n          hash\n      }\n    }\n",
+  "branches": "query { branches }",
+  "get_all": "\n  query GetAll($branch: BranchName!, $key: Key!) {\n      branch(name: $branch) {\n          get_all(key: $key) {\n              value\n              metadata\n          }\n      }\n  }\n",
+  "set_all": "\n  mutation SetAll($branch: BranchName, $key: Key!, $value: Value!, $metadata: Metadata, $info: InfoInput) {\n      set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {\n          hash\n      }\n  }\n",
+  "list": "\n  query List($branch: BranchName!, $key: Key!) {\n      branch(name: $branch) {\n          head {\n              node {\n                  get(key: $key) {\n                      tree {\n                          key,\n                          value\n                      }\n                  }\n              }\n          }\n      }\n  }\n"
 }

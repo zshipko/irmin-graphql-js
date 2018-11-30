@@ -7,4 +7,4 @@ ir.branch("testing").set("a/b/c", "123").then((_) => {
     ir.branches().then((res) => {
         console.log(res);
     });
-});
+}, err => console.log(err));
