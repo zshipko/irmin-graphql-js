@@ -40,7 +40,7 @@ class Key {
 
             this.path = k.split('/');
         } else {
-            this.path = k
+            this.path = k ? k : [];
         }
 
         for (var i = 0; i < this.path.length; i++){
@@ -292,12 +292,11 @@ class BranchRef {
     }
 
     list(key){
-        key = makeKey(key);
         return new Promise((resolve, reject) => {
             this.execute({
                 body: query.list,
                 variables: {
-                    key: key.string(),
+                    key: key,
                 }
             }).then((x) => {
                 let a = x.branch.head.node.get.tree;
