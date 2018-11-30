@@ -84,229 +84,175 @@ class BranchRef {
         return this.client.execute({body, variables, operation})
     }
 
+    _query(name, variables, callback, operationName) {
+        for (var k in variables) {
+            var v = variables[k];
+            if (v instanceof Key) {
+                variables[k] = v.string()
+            }
+        }
+        return new Promise ((resolve, reject) => {
+            this.execute({body: query[name], variables: variables, operationName: operationName}).then((x) => {
+                resolve(callback(x));
+            }, reject);
+        })
+    }
+
     // Get a value from Irmin
     get(key){
         key = makeKey(key);
-        return new Promise ((resolve, reject) => {
-            this.execute({
-                body: query.get,
-                variables: {
-                    key: key.string(),
-                },
-            }).then((x) => {
-                resolve(x.branch.get)
-            }, reject);
-        })
+        return this._query("get", {
+            key: key
+        }, (res) => {
+            return res.branch.get;
+        });
     }
 
     // Get a value with metadata from Irmin
     getAll(key){
         key = makeKey(key);
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.get_all,
-                variables: {
-                    key: key.string()
-                },
-            }).then((x) => {
-                resolve(x.branch.get_all)
-            })
-        })
+        return this._query("get_all", {
+            key: key
+        }, (res) => {
+            return res.branch.get_all;
+        });
     }
 
     getTree(key){
         key = makeKey(key);
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.get_tree,
-                variables: {
-                    key: key.string()
-                },
-            }).then((x) => {
-                let tree = x.branch.get_tree;
-                var obj = {};
-                for(var i = 0; i < tree.length; i++){
-                    var item = tree[i];
-                    obj[makeKey(item.key).string()] = {metadata: item.metadata, value: item.value};
-                }
-                resolve(obj);
-            })
+        return this._query("get_tree", {
+            key: key,
+        }, (res) => {
+            let tree = res.branch.get_tree;
+            var obj = {};
+            for(var i = 0; i < tree.length; i++){
+                var item = tree[i];
+                obj[makeKey(item.key).string()] = {metadata: item.metadata, value: item.value};
+            }
+            return obj;
         })
     }
 
     // Store a value in Irmin
     set(key, value, info=null){
         key = makeKey(key);
-        return new Promise ((resolve, reject) => {
-            this.execute({
-                body: query.set,
-                variables: {
-                    key: key.string(),
-                    value: value,
-                    info: info,
-                }
-            }).then((x) => {
-                resolve(x.set)
-            }, reject);
-        })
+        return this._query("set", {
+            key: key,
+            value: value,
+            info: info,
+        }, (res) => {
+            return res.set;
+        });
     }
 
     // Store a value in Irmin with provided metadata
     setAll(key, value, metadata, info=null){
         key = makeKey(key);
-        return new Promise ((resolve, reject) => {
-            this.execute({
-                body: query.set_all,
-                variables: {
-                    key: key.string(),
-                    value: value,
-                    metadata: metadata,
-                    info: info,
-                }
-            }).then((x) => {
-                resolve(x.set_all)
-            }, reject);
-        })
+        return this._query("set_all", {
+            key: key,
+            value: value,
+            metadata: metadata,
+            info: info,
+        }, (res) => {
+            return res.set_all;
+        });
     }
 
     setTree(key, tree, info=null){
         key = makeKey(key);
-        return new Promise ((resolve, reject) => {
-            var treeArray = [];
+        var treeArray = [];
 
-            for (var k in tree) {
-                treeArray.push({key: k, value: tree[k].value, metadata: tree[k].metadata})
-            }
-
-            this.execute({
-                body: query.set_tree,
-                variables: {
-                    key: key.string(),
-                    tree: treeArray,
-                    info: info,
-                }
-            }).then((x) => {
-                resolve(x.set_all)
-            }, reject);
-        })
+        for (var k in tree) {
+            treeArray.push({key: k, value: tree[k].value, metadata: tree[k].metadata})
+        }
+        return this._query("set_tree", {
+            key: key,
+            tree: treeArray,
+            info: info,
+        }, res => {
+            return res.set_all;
+        });
     }
 
     // Remove a value
     remove(key, info=null){
         key = makeKey(key);
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.remove,
-                variables: {
-                    key: key.string(),
-                    info: info,
-                }
-            }).then((x) => {
-                resolve(x.remove)
-            }, reject);
-        })
+        return this._query("remove", {
+            key: key.string(),
+            info: info,
+        }, res => {
+            return res.remove;
+        });
     }
 
     // Merge branches
     merge(from, info=null){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.merge,
-                variables: {
-                    from: from,
-                    info: info,
-                }
-            }).then((x) => {
-                resolve(x.merge)
-            }, reject);
-        })
+        return this._query("merge", {
+            from: from,
+            info: info,
+        }, res => {
+            return res.merge;
+        });
     }
 
     // Push to a remote repository
     push(remote){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.push,
-                variables: {
-                    remote: remote,
-                }
-            }).then((x) => {
-                resolve(x.push)
-            }, reject);
-        })
+        return this._query("push", {
+            remote: remote,
+        }, res => {
+            return res.push;
+        });
     }
 
     // Pull from a remote repository
     pull(remote, info=null){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.pull,
-                variables: {
-                    remote: remote,
-                    info: info,
-                }
-            }).then((x) => {
-                resolve(x.pull)
-            }, reject)
-        })
+        return this._query("pull", {
+            remote: remote,
+            info: info,
+        }, res => {
+            return res.pull;
+        });
     }
 
     // Restore Irmin to a previous state
     revert(commit){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.revert,
-                variables: {
-                    commit: commit,
-                }
-            }).then((x) => {
-                resolve(x.revert.hash === commit)
-            }, reject)
-        })
+        return this._query("revert", {
+            commit: commit,
+        }, res => {
+            return res.revert.hash === commit;
+        });
     }
 
     // Clone from a remote repository
     clone(remote){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.clone,
-                variables: {
-                    remote: remote,
-                    branch: branch,
-                }
-            }).then((x) => {
-                resolve(x.clone)
-            }, reject)
-        })
+        return this._query("clone", {
+            remote: remote,
+            branch: branch,
+        }, res => {
+            return res.clone;
+        });
     }
 
     // Returns information about the selected branch
     info(){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.branch_info,
-            }).then((x) => {
-                resolve(x.branch)
-            }, reject)
+        return this._query("info", {
+            body: query.branch_info,
+        }, res => {
+            return res.branch;
         });
     }
 
-    list(key){
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.list,
-                variables: {
-                    key: key,
-                }
-            }).then((x) => {
-                let a = x.branch.head.node.get.tree;
-                let b = {};
-                for (var i = 0; i < a.length; i++){
-                    b[makeKey(a[i].key).string()] = a[i].value;
-                }
-                resolve(b)
-            }, reject)
-        })
+    list(step){
+        return this._query("list", {
+            step: step,
+        }, res => {
+            let a = res.branch.head.node.get.tree;
+            let b = {};
+            for (var i = 0; i < a.length; i++){
+                b[makeKey(a[i].key).string()] = a[i].value;
+            }
+            return b;
+        });
     }
 
 
@@ -380,5 +326,8 @@ query = {
   "lca": "\n  query($branch: BranchName!, $hash: CommitHash!) {\n    branch(name: $branch) {\n      lca(commit: $hash) {\n        hash,\n        info {\n          message,\n          author,\n          date\n        }\n        parents {\n          hash\n        }\n      }\n    }\n  }\n",
   "branch_info": "\n  query BranchInfo($branch: BranchName!) {\n      branch(name: $branch) {\n        name,\n        head {\n          hash,\n          info {\n            message,\n            author,\n            date\n          }\n          parents {\n            hash\n          }\n        }\n      }\n  }\n",
   "commit_info": "\n  query CommitInfo($hash: CommitHash!) {\n    commit(hash: $hash) {\n      hash,\n      info {\n          message,\n          author,\n          date\n      }\n      parents {\n          hash\n      }\n    }\n",
-  "branches": "query { branches }"
+  "branches": "query { branches }",
+  "get_all": "\n  query GetAll($branch: BranchName!, $key: Key!) {\n      branch(name: $branch) {\n          get_all(key: $key) {\n              value\n              metadata\n          }\n      }\n  }\n",
+  "set_all": "\n  mutation SetAll($branch: BranchName, $key: Key!, $value: Value!, $metadata: Metadata, $info: InfoInput) {\n      set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {\n          hash\n      }\n  }\n",
+  "list": "\n  query List($branch: BranchName!, $step: Step!) {\n      branch(name: $branch) {\n          head {\n              node {\n                  get(step: $step) {\n                      tree {\n                          key,\n                          value\n                      }\n                  }\n              }\n          }\n      }\n  }\n"
 }

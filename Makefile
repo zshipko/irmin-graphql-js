@@ -11,6 +11,15 @@ clean:
 .PHONY: query.json
 query.json:
 	mkdir -p _build
-	cd _build && (git clone -b update-tree https://github.com/zshipko/irmin-graphql-client || git pull origin) \
+	cd _build && (git clone https://github.com/zshipko/irmin-graphql-client || git pull origin) \
 		&& cd irmin-graphql-client \
 		&& dune exec src/bin/main.exe | jq '.' > ../../query.json
+
+.PHONY: test
+test:
+	mkdir -p _build
+	cd _build && (git clone https://github.com/zshipko/irmin-web || git pull origin) \
+		&& cd irmin-web \
+		&& cp ../../irmin.js ./js \
+		&& xdg-open http://localhost:8080 \
+		&& make test
