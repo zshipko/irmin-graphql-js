@@ -323,7 +323,7 @@ query = {
   "revert": "\n  mutation Revert($branch: BranchName, $commit: CommitHash!) {\n    revert(branch: $branch, commit: $commit) {\n      hash\n    }\n  }\n",
   "lca": "\n  query($branch: BranchName!, $hash: CommitHash!) {\n    branch(name: $branch) {\n      lca(commit: $hash) {\n        hash,\n        info {\n          message,\n          author,\n          date\n        }\n        parents {\n          hash\n        }\n      }\n    }\n  }\n",
   "branch_info": "\n  query BranchInfo($branch: BranchName!) {\n      branch(name: $branch) {\n        name,\n        head {\n          hash,\n          info {\n            message,\n            author,\n            date\n          }\n          parents {\n            hash\n          }\n        }\n      }\n  }\n",
-  "commit_info": "\n  query CommitInfo($hash: CommitHash!) {\n    commit(hash: $hash) {\n      hash,\n      info {\n          message,\n          author,\n          date\n      }\n      parents {\n          hash\n      }\n    }\n",
+  "commit_info": "\n  query CommitInfo($hash: CommitHash!) {\n    commit(hash: $hash) {\n      hash,\n      info {\n          message,\n          author,\n          date\n      }\n      parents {\n          hash\n      }\n    }\n  }\n",
   "branches": "query { branches }",
   "get_all": "\n  query GetAll($branch: BranchName!, $key: Key!) {\n      branch(name: $branch) {\n          get_all(key: $key) {\n              value\n              metadata\n          }\n      }\n  }\n",
   "set_all": "\n  mutation SetAll($branch: BranchName, $key: Key!, $value: Value!, $metadata: Metadata, $info: InfoInput) {\n      set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {\n          hash\n      }\n  }\n",
