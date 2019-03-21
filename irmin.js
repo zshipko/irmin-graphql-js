@@ -244,6 +244,7 @@ class BranchRef {
         return this._query("list", {
             step: step,
         }, res => {
+            console.log(res);
             let a = res.branch.head.node.get.tree;
             let b = {};
             for (var i = 0; i < a.length; i++){
@@ -291,6 +292,7 @@ class Irmin {
         return new Promise((resolve, reject) => {
             return request(this.url, q).then((response) => {
                 response.text().then((x) => {
+                    console.log(x);
                     try {
                         resolve(JSON.parse(x).data)
                     } catch (err) {
@@ -321,7 +323,6 @@ query = {
   "pull": "\n  mutation Pull($branch: BranchName, $remote: Remote!, $info: InfoInput) {\n    pull(branch: $branch, remote: $remote, info: $info) {\n      hash\n    }\n  }\n",
   "clone": "\n  mutation Clone($branch: BranchName, $remote: Remote!) {\n    clone(branch: $branch, remote: $remote) {\n      hash\n    }\n  }\n",
   "revert": "\n  mutation Revert($branch: BranchName, $commit: CommitHash!) {\n    revert(branch: $branch, commit: $commit) {\n      hash\n    }\n  }\n",
-  "lca": "\n  query($branch: BranchName!, $hash: CommitHash!) {\n    branch(name: $branch) {\n      lca(commit: $hash) {\n        hash,\n        info {\n          message,\n          author,\n          date\n        }\n        parents {\n          hash\n        }\n      }\n    }\n  }\n",
   "branch_info": "\n  query BranchInfo($branch: BranchName!) {\n      branch(name: $branch) {\n        name,\n        head {\n          hash,\n          info {\n            message,\n            author,\n            date\n          }\n          parents {\n            hash\n          }\n        }\n      }\n  }\n",
   "commit_info": "\n  query CommitInfo($hash: CommitHash!) {\n    commit(hash: $hash) {\n      hash,\n      info {\n          message,\n          author,\n          date\n      }\n      parents {\n          hash\n      }\n    }\n  }\n",
   "branches": "query { branches }",
