@@ -104,17 +104,17 @@ class BranchRef {
         return this._query("get", {
             key: key
         }, (res) => {
-            return res.branch.get;
+            return res.branch.tree.get;
         });
     }
 
     // Get a value with metadata from Irmin
-    getAll(key){
+    getContents(key){
         key = makeKey(key);
-        return this._query("get_all", {
+        return this._query("get_contents", {
             key: key
         }, (res) => {
-            return res.branch.get_all;
+            return res.branch.tree.get_contents;
         });
     }
 
@@ -186,12 +186,12 @@ class BranchRef {
     }
 
     // Merge branches
-    merge(from, info=null){
-        return this._query("merge", {
+    mergeWithBranch(from, info=null){
+        return this._query("merge_with_branch", {
             from: from,
             info: info,
         }, res => {
-            return res.merge;
+            return res.merge_with_branch;
         });
     }
 
@@ -357,8 +357,8 @@ query = {
       }
   } `,
 
-  "merge": `mutation Merge($branch: BranchName, $from: BranchName!, $info: InfoInput) {
-      merge(branch: $branch, from: $from, info: $info) {
+  "merge_with_branch": `mutation Merge($branch: BranchName, $from: BranchName!, $info: InfoInput) {
+      merge_with_branch(branch: $branch, from: $from, info: $info) {
           hash
       }
   }`,
@@ -415,12 +415,17 @@ query = {
       }
   } `,
 
-  "branches": `query { branches }`,
-  "get_all": `query GetAll($branch: BranchName!, $key: Key!) {
+  "branches": `query {
+      branches
+  }`,
+
+  "get_contents": `query GetAll($branch: BranchName!, $key: Key!) {
       branch(name: $branch) {
-          get_all(key: $key) {
-              value
-              metadata
+          tree {
+              get_contents(key: $key) {
+                  value
+                  metadata
+              }
           }
       }
   } `,
