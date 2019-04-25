@@ -123,7 +123,7 @@ class BranchRef {
         return this._query("get_tree", {
             key: key,
         }, (res) => {
-            let tree = res.branch.get_tree;
+            let tree = res.branch.tree.get_tree.list_contents_recursively;
             var obj = {};
             for(var i = 0; i < tree.length; i++){
                 var item = tree[i];
@@ -240,14 +240,14 @@ class BranchRef {
         });
     }
 
-    list(step){
+    list(key){
         return this._query("list", {
-            step: step,
+            key: key,
         }, res => {
-            console.log(res);
-            let a = res.branch.head.node.get.tree;
+            let a = res.branch.head.tree.get_tree.list;
             let b = {};
             for (var i = 0; i < a.length; i++){
+                if (typeof a[i].value == "undefined") continue;
                 b[makeKey(a[i].key).string()] = a[i].value;
             }
             return b;
@@ -292,7 +292,6 @@ class Irmin {
         return new Promise((resolve, reject) => {
             return request(this.url, q).then((response) => {
                 response.text().then((x) => {
-                    console.log(x);
                     try {
                         resolve(JSON.parse(x).data)
                     } catch (err) {
@@ -312,21 +311,140 @@ if (typeof exports != "undefined") {
 // queries
 
 query = {
-  "get": "\n  query Get($branch: BranchName!, $key: Key!) {\n    branch(name: $branch) {\n      get(key: $key)\n    }\n  }\n",
-  "get_tree": "\n  query GetTree($branch: BranchName!, $key: Key!) {\n    branch(name: $branch) {\n      get_tree(key: $key) {\n        key\n        value\n        metadata\n      }\n    }\n  }\n",
-  "set": "\n  mutation Set($branch: BranchName!, $key: Key!, $value: Value!, $info: InfoInput) {\n    set(branch: $branch, key: $key, value: $value, info: $info) {\n      hash\n    }\n  }\n",
-  "update_tree": "\n  mutation UpdateTree($branch: BranchName!, $key: Key!, $tree: [TreeItem!]!, $info: InfoInput) {\n    update_tree(branch: $branch, key: $key, tree: $tree, info: $info) {\n      hash\n    }\n  }\n",
-  "set_tree": "\n  mutation SetTree($branch: BranchName!, $key: Key!, $tree: [TreeItem!]! , $info: InfoInput) {\n    set_tree(branch: $branch, key: $key, tree: $tree, info: $info) {\n      hash\n    }\n  }\n",
-  "remove": "\n  mutation Remove($branch: BranchName!, $key: Key!, $info: InfoInput) {\n    remove(branch: $branch, key: $key, info: $info) {\n      hash\n    }\n  }\n",
-  "merge": "\n  mutation Merge($branch: BranchName, $from: BranchName!, $info: InfoInput) {\n      merge(branch: $branch, from: $from, info: $info) {\n          hash\n      }\n  }\n",
-  "push": "\n  mutation Push($branch: BranchName, $remote: Remote!) {\n    push(branch: $branch, remote: $remote)\n  }\n",
-  "pull": "\n  mutation Pull($branch: BranchName, $remote: Remote!, $info: InfoInput) {\n    pull(branch: $branch, remote: $remote, info: $info) {\n      hash\n    }\n  }\n",
-  "clone": "\n  mutation Clone($branch: BranchName, $remote: Remote!) {\n    clone(branch: $branch, remote: $remote) {\n      hash\n    }\n  }\n",
-  "revert": "\n  mutation Revert($branch: BranchName, $commit: CommitHash!) {\n    revert(branch: $branch, commit: $commit) {\n      hash\n    }\n  }\n",
-  "branch_info": "\n  query BranchInfo($branch: BranchName!) {\n      branch(name: $branch) {\n        name,\n        head {\n          hash,\n          info {\n            message,\n            author,\n            date\n          }\n          parents {\n            hash\n          }\n        }\n      }\n  }\n",
-  "commit_info": "\n  query CommitInfo($hash: CommitHash!) {\n    commit(hash: $hash) {\n      hash,\n      info {\n          message,\n          author,\n          date\n      }\n      parents {\n          hash\n      }\n    }\n  }\n",
-  "branches": "query { branches }",
-  "get_all": "\n  query GetAll($branch: BranchName!, $key: Key!) {\n      branch(name: $branch) {\n          get_all(key: $key) {\n              value\n              metadata\n          }\n      }\n  }\n",
-  "set_all": "\n  mutation SetAll($branch: BranchName, $key: Key!, $value: Value!, $metadata: Metadata, $info: InfoInput) {\n      set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {\n          hash\n      }\n  }\n",
-  "list": "\n  query List($branch: BranchName!, $step: Step!) {\n      branch(name: $branch) {\n          head {\n              node {\n                  get(step: $step) {\n                      tree {\n                          key,\n                          value\n                      }\n                  }\n              }\n          }\n      }\n  }\n"
+  "get": `query Get($branch: BranchName!, $key: Key!) {
+      branch(name: $branch) {
+          tree {
+              get(key: $key)
+          }
+      }
+  }`,
+
+  "get_tree": `query GetTree($branch: BranchName!, $key: Key!) {
+      branch(name: $branch) {
+          tree {
+              get_tree(key: $key) {
+                list_contents_recursively {
+                    key
+                    value
+                    metadata
+                }
+             }
+          }
+      }
+  }`,
+
+  "set": `mutation Set($branch: BranchName!, $key: Key!, $value: Value!, $info: InfoInput) {
+      set(branch: $branch, key: $key, value: $value, info: $info) {
+          hash
+      }
+  }`,
+
+  "update_tree": `mutation UpdateTree($branch: BranchName!, $key: Key!, $tree: [TreeItem!]!, $info: InfoInput) {
+      update_tree(branch: $branch, key: $key, tree: $tree, info: $info) {
+          hash
+      }
+  } `,
+
+  "set_tree": `mutation SetTree($branch: BranchName!, $key: Key!, $tree: [TreeItem!]! , $info: InfoInput) {
+      set_tree(branch: $branch, key: $key, tree: $tree, info: $info) {
+          hash
+      }
+  }`,
+
+  "remove": `mutation Remove($branch: BranchName!, $key: Key!, $info: InfoInput) {
+      remove(branch: $branch, key: $key, info: $info) {
+          hash
+      }
+  } `,
+
+  "merge": `mutation Merge($branch: BranchName, $from: BranchName!, $info: InfoInput) {
+      merge(branch: $branch, from: $from, info: $info) {
+          hash
+      }
+  }`,
+
+  "push": `mutation Push($branch: BranchName, $remote: Remote!) {
+      push(branch: $branch, remote: $remote)
+  }`,
+
+  "pull": `mutation Pull($branch: BranchName, $remote: Remote!, $info: InfoInput) {
+      pull(branch: $branch, remote: $remote, info: $info) {
+          hash
+      }
+  } `,
+
+  "clone": `mutation Clone($branch: BranchName, $remote: Remote!) {
+      clone(branch: $branch, remote: $remote) {
+          hash
+      }
+  } `,
+
+  "revert": `mutation Revert($branch: BranchName, $commit: CommitHash!) {
+      revert(branch: $branch, commit: $commit) {
+          hash     }
+  } `,
+
+  "branch_info": `query BranchInfo($branch: BranchName!) {
+      branch(name: $branch) {
+          name,
+              head {
+                  hash,
+                      info {
+                          message,
+                          author,
+                          date
+                      }
+                  parents {
+                      hash
+                  }
+              }
+      }
+  } `,
+
+  "commit_info": `query CommitInfo($hash: CommitHash!) {
+      commit(hash: $hash) {
+          hash,
+          info {
+              message,
+              author,
+              date
+          }
+          parents {
+              hash
+          }
+      }
+  } `,
+
+  "branches": `query { branches }`,
+  "get_all": `query GetAll($branch: BranchName!, $key: Key!) {
+      branch(name: $branch) {
+          get_all(key: $key) {
+              value
+              metadata
+          }
+      }
+  } `,
+
+  "set_all": `mutation SetAll($branch: BranchName, $key: Key!, $value: Value!, $metadata: Metadata, $info: InfoInput) {
+      set_all(branch: $branch, key: $key, value: $value, metadata: $metadata, info: $info) {
+          hash
+      }
+  } `,
+
+  "list": `query List($branch: BranchName!, $key: Key!) {
+      branch(name: $branch) {
+          head {
+              tree {
+                  get_tree(key: $key) {
+                      list {
+                          ... on Contents {
+                              key,
+                              value
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  } `,
 }
