@@ -1,6 +1,6 @@
 # irmin-js
 
-`irmin.js` is a Javascript library for communicating directly with [irmin-graphql](https://github.com/andreas/irmin-graphql) servers. It is a core component of [irmin-web](https://github.com/zshipko/irmin-web), which is used to simplify the process of building single-page web applications using `irmin.js`.
+`irmin.js` is a Javascript library for communicating directly with [irmin-graphql](https://github.com/andreas/irmin-graphql) servers. It is a core component of [irmin-web](https://github.com/zshipko/irmin-web), which is used to simplify the process of building single-page web applications using Irmin.
 
 ## Getting started
 
