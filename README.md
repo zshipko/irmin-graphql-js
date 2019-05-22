@@ -56,3 +56,5 @@ In the example above, `body` is a string containing the actual query, `data` is 
 ## Examples
 
 There are some examples using NodeJS in the `examples/` directory, they require the `node-fetch` package to be installed via npm.
+
+You may also be interested in checking out the [GraphQL](https://zshipko.github.io/irmin-tutorial/GraphQL.html) section of the [Irmin Tutorial](https://zshipko.github.io/irmin-tutorial/)!
