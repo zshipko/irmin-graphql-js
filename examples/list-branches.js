@@ -1,10 +1,11 @@
-fetch = require('node-fetch');
-const Irmin = require('../irmin.js').Irmin;
+const {Irmin} = require('../irmin.js');
 
 let ir = new Irmin("http://localhost:8080/graphql");
 
-ir.branch("testing").set("a/b/c", "123").then((_) => {
-    ir.branches().then((res) => {
-        console.log(res);
-    });
-}, err => console.log(err));
+async function main() {
+    let _results = await ir.branch("testing").set("a/b/c/", "123");
+    let branches = await ir.branches();
+    console.log(branches);
+}
+
+main();

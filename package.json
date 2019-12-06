@@ -1,0 +1,30 @@
+{
+  "name": "irmin",
+  "version": "1.0.0",
+  "description": "Irmin client",
+  "main": "irmin.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zshipko/irmin-js.git"
+  },
+  "keywords": [
+    "git",
+    "irmin",
+    "key-value-store"
+  ],
+  "author": "Zach Shipko",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zshipko/irmin-js/issues"
+  },
+  "homepage": "https://github.com/zshipko/irmin-js#readme",
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  }
+}

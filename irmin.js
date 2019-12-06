@@ -1,3 +1,8 @@
+try {
+    fetch = require('node-fetch');
+} catch (_err){
+}
+
 // irmin.js provides simple bindings to access irmin-graphql endpoints from the browser.
 
 // `request` is a small wrapper around `fetch` for sending requests to
@@ -6,7 +11,7 @@ function request(url, body){
     return fetch(url, {
         method: 'POST',
         body: JSON.stringify(body),
-        header: {
+        headers: {
             "Content-Type": "application/json"
         }
     });
@@ -79,93 +84,86 @@ class BranchRef {
     }
 
     // Execute a query, with the given variables and operation name
-    execute({body, variables={}, operation=null}){
-        variables["branch"] = this.name;
-        return this.client.execute({body, variables, operation})
-    }
-
-    _query(name, variables, callback, operationName) {
+    async execute({body, variables={}, operation=null}){
         for (var k in variables) {
             var v = variables[k];
             if (v instanceof Key) {
                 variables[k] = v.string()
             }
         }
-        return new Promise ((resolve, reject) => {
-            this.execute({body: query[name], variables: variables, operationName: operationName}).then((x) => {
-                resolve(callback(x));
-            }, reject);
-        })
+        variables["branch"] = this.name;
+        let res = await this.client.execute({body, variables, operation});
+        return res;
+    }
+
+    async _query(name, variables, operationName) {
+        let x = await this.execute({body: query[name], variables: variables, operationName: operationName});
+        return x;
     }
 
     // Get a value from Irmin
-    get(key){
+    async get(key){
         key = makeKey(key);
-        return this._query("get", {
+        let res = await this._query("get", {
             key: key
-        }, (res) => {
-            return res.branch.tree.get;
         });
+        return res.branch.tree.get;
     }
 
     // Get a value with metadata from Irmin
-    getContents(key){
+    async getContents(key){
         key = makeKey(key);
-        return this._query("get_contents", {
+        let res = await this._query("get_contents", {
             key: key
-        }, (res) => {
-            return res.branch.tree.get_contents;
         });
+        return res.branch.tree.get_contents;
     }
 
-    getTree(key){
+    async getTree(key){
         key = makeKey(key);
-        return this._query("get_tree", {
+        let res = await this._query("get_tree", {
             key: key,
-        }, (res) => {
-            let tree = res.branch.tree.get_tree.list_contents_recursively;
-            var obj = {};
-            for(var i = 0; i < tree.length; i++){
-                var item = tree[i];
-                obj[makeKey(item.key).string()] = {metadata: item.metadata, value: item.value};
-            }
-            return obj;
-        })
+        });
+        let tree = res.branch.tree.get_tree.list_contents_recursively;
+        var obj = {};
+        for(var i = 0; i < tree.length; i++){
+            var item = tree[i];
+            obj[makeKey(item.key).string()] = {metadata: item.metadata, value: item.value};
+        }
+        return obj;
     }
 
     // Store a value in Irmin
-    set(key, value, info=null){
+    async set(key, value, info=null){
         key = makeKey(key);
-        return this._query("set", {
+        let res = await this._query("set", {
             key: key,
             value: value,
             info: info,
-        }, (res) => {
-            return res.set;
         });
+        return res.set;
     }
 
     // Store a value in Irmin with provided metadata
-    setAll(key, value, metadata, info=null){
+    async setAll(key, value, metadata, info=null){
         key = makeKey(key);
-        return this._query("set_all", {
+        let res = await this._query("set_all", {
             key: key,
             value: value,
             metadata: metadata,
             info: info,
-        }, (res) => {
-            return res.set_all;
         });
+        return res.set_all;
     }
 
-    setTree(key, tree, info=null){
+    async setTree(key, tree, info=null){
         key = makeKey(key);
         var treeArray = [];
 
         for (var k in tree) {
             treeArray.push({key: k, value: tree[k].value, metadata: tree[k].metadata})
         }
-        return this._query("set_tree", {
+        let res = await this._query("set_tree", {
             key: key,
             tree: treeArray,
             info: info,
@@ -175,83 +173,77 @@ class BranchRef {
     }
 
     // Remove a value
-    remove(key, info=null){
+    async remove(key, info=null){
         key = makeKey(key);
-        return this._query("remove", {
+        let res = await this._query("remove", {
             key: key.string(),
             info: info,
-        }, res => {
-            return res.remove;
         });
+        return res.remove;
     }
 
     // Merge branches
-    mergeWithBranch(from, info=null){
-        return this._query("merge_with_branch", {
+    async mergeWithBranch(from, info=null){
+        let res = await this._query("merge_with_branch", {
             from: from,
             info: info,
-        }, res => {
-            return res.merge_with_branch;
         });
+        return res.merge_with_branch;
     }
 
     // Push to a remote repository
-    push(remote){
-        return this._query("push", {
+    async push(remote){
+        let res = await this._query("push", {
             remote: remote,
-        }, res => {
-            return res.push;
         });
+
+        return res.push;
     }
 
     // Pull from a remote repository
-    pull(remote, info=null){
-        return this._query("pull", {
+    async pull(remote, info=null){
+        let res = await this._query("pull", {
             remote: remote,
             info: info,
-        }, res => {
-            return res.pull;
         });
+        return res.pull;
     }
 
     // Restore Irmin to a previous state
-    revert(commit){
-        return this._query("revert", {
+    async revert(commit){
+        let res = await this._query("revert", {
             commit: commit,
-        }, res => {
-            return res.revert.hash === commit;
         });
+        return res.revert.hash === commit;
     }
 
     // Clone from a remote repository
-    clone(remote){
-        return this._query("clone", {
+    async clone(remote){
+        let res = await this._query("clone", {
             remote: remote,
             branch: branch,
-        }, res => {
-            return res.clone;
         });
+        return res.clone;
     }
 
     // Returns information about the selected branch
-    info(){
-        return this._query("branch_info", {}, res => {
-            return res.branch;
-        });
+    async info(){
+        let res = await this._query("branch_info", {});
+        return res.branch;
     }
 
-    list(key){
-        return this._query("list", {
+    async list(key){
+        let res = await this._query("list", {
             key: key,
-        }, res => {
-            let a = res.branch.head.tree.get_tree.list;
-            let b = {};
-            for (var i = 0; i < a.length; i++){
-                if (typeof a[i].value == "undefined") continue;
-                b[makeKey(a[i].key).string()] = a[i].value;
-            }
-            return b;
         });
+
+        let a = res.branch.head.tree.get_tree.list;
+        let b = {};
+        for (var i = 0; i < a.length; i++){
+            if (typeof a[i].value == "undefined") continue;
+            b[makeKey(a[i].key).string()] = a[i].value;
+        }
+        return b;
     }
 
 
@@ -271,35 +263,30 @@ class Irmin {
         return new BranchRef(this, "master")
     }
 
-    branches() {
-        return new Promise((resolve, reject) => {
-            this.execute({
-                body: query.branches,
-            }).then((res) => {
-                resolve(res.branches);
-            }, reject);
+    async branches() {
+        let res = await this.execute({
+            body: query.branches,
         });
+
+        let branches = [];
+        for(let i = 0; i < res.branches.length; i++){
+            branches.push(res.branches[i].name);
+        }
+
+        return branches;
     }
 
     // Execute a query, with the given variables and operation name
-    execute({body, variables={}, operation=null}){
+    async execute({body, variables={}, operation=null}){
         let q = {
             query: body,
             operationName: operation,
             variables: variables,
         };
 
-        return new Promise((resolve, reject) => {
-            return request(this.url, q).then((response) => {
-                response.text().then((x) => {
-                    try {
-                        resolve(JSON.parse(x).data)
-                    } catch (err) {
-                        reject(x)
-                    }
-                });
-            }, reject);
-        });
+        let response = await request(this.url, q);
+        let text = await response.text();
+        return JSON.parse(text).data;
     }
 }
 
@@ -416,7 +403,9 @@ query = {
   } `,
 
   "branches": `query {
-      branches
+      branches {
+        name
+      }
   }`,
 
   "get_contents": `query GetAll($branch: BranchName!, $key: Key!) {
