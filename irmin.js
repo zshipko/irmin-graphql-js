@@ -259,8 +259,8 @@ class Irmin {
         return new BranchRef(this, name)
     }
 
-    master() {
-        return new BranchRef(this, "master")
+    main() {
+        return new BranchRef(this, "main")
     }
 
     async branches() {
