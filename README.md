@@ -13,14 +13,14 @@ var ir = new Irmin("https://127.0.0.1:8080/graphql");
 Setting a value:
 
 ```javascript
-let commit = await ir.master().set("a/b/c", "123");
+let commit = await ir.main().set("a/b/c", "123");
 console.log(commit.hash);
 ```
 
 Getting a value:
 
 ```javascript
-let value = await ir.master().get("a/b/c");
+let value = await ir.main().get("a/b/c");
 console.log(value);
 ```
 
@@ -31,7 +31,7 @@ Once you get past the most basic operations you will most likely need to write a
 ```javascript
 let body = `
     query GetExample($key: String!) {
-        master {
+        main {
           tree {
             get(key: $key)
           }
@@ -48,7 +48,7 @@ let query = {
 };
 
 let res = await ir.execute(query);
-console.log(res.master.tree.get);
+console.log(res.main.tree.get);
 ```
 
 In the example above, `body` is a string containing the actual query, `data` is an object with `body`, `vars` and `operation` fields. The `vars` and `operation` fields may be left undefined if not in use.
