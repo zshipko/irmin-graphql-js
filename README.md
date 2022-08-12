@@ -1,6 +1,6 @@
-# irmin-js
+# irmin-graphql-js
 
-`irmin.js` is a Javascript library for communicating directly with [irmin-graphql](https://github.com/mirage/irmin) GraphQL servers.
+`irmin-graphql-js` is a Javascript library for communicating directly with [irmin-graphql](https://github.com/mirage/irmin) GraphQL servers.
 
 ## Getting started
 
